@@ -7,7 +7,7 @@ const output = fs.createWriteStream(streamPath);
 
 stdout.write('Please, typing your text:\n')
 stdin.on('data', data => {
-    const text = data.toString().slice(0, -1);
+    const text = data.toString().trim();
     if(text !== 'exit') {
         output.write(text + '\n');
     } else {
