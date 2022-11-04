@@ -1,13 +1,12 @@
 const path = require('path');
 const fs = require('fs');
-const { async } = require('jshint/src/prod-params');
 const fsPromises = fs.promises;
 
 const dstFolder = path.resolve(__dirname, './project-dist');
 const srcIndex = path.resolve(__dirname, 'template.html');
-const dstIndex = path.resolve(__dirname, 'project-dist', 'index.html');
+const dstIndex = path.resolve(dstFolder, 'index.html');
 const srcStyle = path.resolve(__dirname, './styles');
-const dstStyle = path.resolve(__dirname, 'project-dist', 'style.css');
+const dstStyle = path.resolve(dstFolder, 'style.css');
 
 async function createFolders() {
   fs.mkdir(dstFolder, { recursive: true }, (err) => {
@@ -17,13 +16,9 @@ async function createFolders() {
   });
 }
 
-createFolders();
-
 async function createHtml() {
   fs.copyFile(srcIndex, dstIndex, (err) => {
-    if (err) {
-      return console.error(err);
-    }
+    if (err) console.log(err);
   });
 
   fs.readFile(srcIndex, 'utf-8', (err, data) => {
@@ -49,10 +44,8 @@ async function createHtml() {
         });
       });
     }
-  })
+  });
 }
-
-createHtml();
 
 async function createCssFile() {
   const output = fs.createWriteStream(dstStyle);
@@ -65,8 +58,7 @@ async function createCssFile() {
         if (file.isFile() && (path.extname(file.name) === '.css')) {
           let stream = fs.createReadStream(path.join(srcStyle, file.name), 'utf-8');
           stream.on('data', chunk => output.write(chunk + '\n'), (err) => {
-            if (err)
-              throw err;
+            if (err) console.log(err);
           });
         }
       });
@@ -74,21 +66,17 @@ async function createCssFile() {
   });
 }
 
-createCssFile();
-
 async function copyAssetsDir(srcAssets = path.resolve(__dirname, './assets'),
   dstAssets = path.resolve(__dirname, 'project-dist', './assets')) {
     fs.rm(dstAssets, { recursive: true, force: true }, (err) => {
-    if (err) throw err;
+      if (err) console.log(err);
       fs.mkdir(dstAssets, { recursive: true }, async (err) => {
-          if (err) {
-            return console.error(err);
-          }
-        });
+        if (err) console.log(err);
+      });
       fs.readdir(srcAssets, { withFileTypes: true }, async (err, files) => {
-          if (err)
-            console.log(err);
-          else {
+        if (err) {
+          console.log(err);
+        } else {
             files.forEach(async (file) => {
               let srcAssetsTemp = path.resolve(srcAssets, file.name);
               let dstAssetsTemp = path.resolve(dstAssets, file.name);
@@ -99,8 +87,15 @@ async function copyAssetsDir(srcAssets = path.resolve(__dirname, './assets'),
               }
             });
           }
-        });
-    })
+      });
+    });
 }
 
-copyAssetsDir();
+async function createBundle() {
+  await createFolders();
+  await createHtml();
+  await createCssFile();
+  await copyAssetsDir();
+}
+
+createBundle();
